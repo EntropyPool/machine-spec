@@ -1,7 +1,6 @@
 package machspec
 
 import (
-	"fmt"
 	"strings"
 	"errors"
 	dmidecode "github.com/dselans/dmidecode"
