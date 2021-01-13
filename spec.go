@@ -12,7 +12,7 @@ import (
 type MachineSpec struct {
 	SerialNumber []map[string]string `json:"sn"` //主板序列号
 	Memory []string `json:"memory"`
-	Cpu []string `json:"cpu"`
+	Cpu []map[string]string `json:"cpu"`
 }
 
 /**
@@ -51,7 +51,10 @@ func ReadMachineSpec() (*MachineSpec, error) {
 
 			//cpu
 			if record["DMIType"] == "4" {
-				machineSpec.Cpu = append(machineSpec.Cpu, record["Version"])
+				cpu := make(map[string]string)
+				cpu["ID"] = record["ID"]
+				cpu["Version"] = record["Version"]
+				machineSpec.Cpu = append(machineSpec.Cpu, cpu)
 			}
 
 			//memory
