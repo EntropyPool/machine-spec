@@ -2,6 +2,7 @@ package machspec
 
 import (
 	"fmt"
+	"strings"
 	"errors"
 	dmidecode "github.com/dselans/dmidecode"
 	"os/user"
@@ -9,9 +10,21 @@ import (
 )
 
 type MachineSpec struct {
-	SerialNumber []string `json:"sn"` //主板序列号
+	SerialNumber []map[string]string `json:"sn"` //主板序列号
+	Memory []string `json:"memory"`
+	Cpu []string `json:"cpu"`
 }
 
+/**
+ * DMIType 编码列表
+ * 0 BIOS
+ * 1 System
+ * 2 Base Bord
+ * 3 Chassis
+ * 4 Processor
+ * 16 Physical Memory Array
+ * 17 Memory Device
+ */
 func ReadMachineSpec() (*MachineSpec, error) {
 	usr, err := user.Current()
 	if nil != err {
@@ -25,19 +38,33 @@ func ReadMachineSpec() (*MachineSpec, error) {
 		return nil, err
 	}
 
-	fmt.Println(dmi.Data);
-	fmt.Println("--------------")
-
 	machineSpec := new(MachineSpec)
 	for _,records := range dmi.Data {
 		for _, record := range records {
-			for key, val := range record {
-				if key == "Serial Number" {
-					machineSpec.SerialNumber = append(machineSpec.SerialNumber, val)
+			//系统序列号
+			if record["DMIType"] == "1"|| record["DMIType"] == "2" || record["DMIType"] == "3" {
+				sn := make(map[string]string)
+				sn["type"] = record["DMIType"]
+				sn["serial_number"] = record["Serial Number"]
+				machineSpec.SerialNumber = append(machineSpec.SerialNumber, sn)
+		    }
+
+			//cpu
+			if record["DMIType"] == "4" {
+				machineSpec.Cpu = append(machineSpec.Cpu, record["Version"])
+			}
+
+			//memory
+			if record["DMIType"] == "17" {
+				if strings.Contains(record["Size"], "GB") {
+					tmpMemory := strings.Split(record["Size"], " ")
+					machineSpec.Memory = append(machineSpec.Memory, tmpMemory[0])
 				}
 			}
 		}
 	}
+
+	fmt.Println(machineSpec)
 
 	return machineSpec, nil
 }
