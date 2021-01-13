@@ -67,7 +67,5 @@ func ReadMachineSpec() (*MachineSpec, error) {
 		}
 	}
 
-	fmt.Println(machineSpec)
-
 	return machineSpec, nil
 }
