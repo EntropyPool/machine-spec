@@ -1,6 +1,7 @@
 package machspec
 
 import (
+	log "github.com/EntropyPool/entropy-logger"
 	"testing"
 )
 
@@ -11,5 +12,9 @@ func TestReadMachineSpec(t *testing.T) {
 	}
 	if nil == spec {
 		t.Errorf("CANNOT read machine spec by [return nil]")
+	}
+	if nil != spec {
+		sn := spec.SN()
+		log.Infof(log.Fields{}, "Machine SN: %v", sn)
 	}
 }

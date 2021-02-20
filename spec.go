@@ -1,18 +1,28 @@
 package machspec
 
 import (
-	"fmt"
-	"strings"
 	"errors"
+	"fmt"
 	dmidecode "github.com/dselans/dmidecode"
 	"os/user"
-	//"encoding/json"
+	"strings"
 )
 
 type MachineSpec struct {
 	SerialNumber []map[string]string `json:"sn"` //主板序列号
-	Memory []string `json:"memory"`
-	Cpu []map[string]string `json:"cpu"`
+	Memory       []string            `json:"memory"`
+	Cpu          []map[string]string `json:"cpu"`
+}
+
+func (spec *MachineSpec) SN() string {
+	sn := ""
+	for i, s := range spec.SerialNumber {
+		if 0 < i {
+			sn = fmt.Sprintf("%s-", sn)
+		}
+		sn = fmt.Sprintf("%s%s", sn, s)
+	}
+	return sn
 }
 
 /**
@@ -39,15 +49,15 @@ func ReadMachineSpec() (*MachineSpec, error) {
 	}
 
 	machineSpec := new(MachineSpec)
-	for _,records := range dmi.Data {
+	for _, records := range dmi.Data {
 		for _, record := range records {
 			//系统序列号
-			if record["DMIType"] == "1"|| record["DMIType"] == "2" || record["DMIType"] == "3" {
+			if record["DMIType"] == "1" || record["DMIType"] == "2" || record["DMIType"] == "3" {
 				sn := make(map[string]string)
 				sn["type"] = record["DMIType"]
 				sn["serial_number"] = record["Serial Number"]
 				machineSpec.SerialNumber = append(machineSpec.SerialNumber, sn)
-		    }
+			}
 
 			//cpu
 			if record["DMIType"] == "4" {
@@ -66,8 +76,6 @@ func ReadMachineSpec() (*MachineSpec, error) {
 			}
 		}
 	}
-
-	fmt.Println(machineSpec)
 
 	return machineSpec, nil
 }
