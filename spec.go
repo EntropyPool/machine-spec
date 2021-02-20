@@ -6,6 +6,7 @@ import (
 	dmidecode "github.com/dselans/dmidecode"
 	"os/user"
 	"strings"
+	"sort"
 )
 
 type MachineSpec struct {
@@ -16,11 +17,36 @@ type MachineSpec struct {
 
 func (spec *MachineSpec) SN() string {
 	sn := ""
-	for i, s := range spec.SerialNumber {
+	keys := make([]string, 0)
+	for _, snm := range spec.SerialNumber {
+		keys = append(keys, snm["type"])
+	}
+	sort.SliceStable(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+	type keyC struct {
+		key string
+		val string
+	}
+	keyCs := make([]keyC, len(keys))
+	for i, key := range keys {
+		keyCs[i].key = key
+	}
+	for _, snm := range spec.SerialNumber {
+		for i, key := range keys {
+			if snm["type"] == key {
+				keyCs[i].val = snm["serial_number"]
+				break
+			}
+		}
+	}
+	i := 0
+	for _, keyC := range keyCs {
 		if 0 < i {
 			sn = fmt.Sprintf("%s-", sn)
 		}
-		sn = fmt.Sprintf("%s%s", sn, s)
+		sn = fmt.Sprintf("%s%v-%s", sn, keyC.key, keyC.val)
+		i += 1
 	}
 	return sn
 }
