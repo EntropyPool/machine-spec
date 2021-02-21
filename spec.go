@@ -4,15 +4,41 @@ import (
 	"errors"
 	"fmt"
 	dmidecode "github.com/dselans/dmidecode"
+	"net"
 	"os/user"
-	"strings"
 	"sort"
+	"strings"
 )
 
 type MachineSpec struct {
 	SerialNumber []map[string]string `json:"sn"` //主板序列号
 	Memory       []string            `json:"memory"`
 	Cpu          []map[string]string `json:"cpu"`
+}
+
+func (spec *MachineSpec) MAC() string {
+	ifs, err := net.Interfaces()
+	if err != nil {
+		return ""
+	}
+	var macs []string
+	for _, ifa := range ifs {
+		mac := ifa.HardwareAddr.String()
+		if mac != "" {
+			macs = append(macs, mac)
+		}
+	}
+	sort.SliceStable(macs, func(i, j int) bool {
+		return macs[i] < macs[j]
+	})
+	macsStr := ""
+	for i, mac := range macs {
+		if 0 < i {
+			macsStr = fmt.Sprintf("%s-", macsStr)
+		}
+		macsStr = fmt.Sprintf("%s%s", macsStr, strings.Replace(mac, ":", "", -1))
+	}
+	return macsStr
 }
 
 func (spec *MachineSpec) SN() string {
@@ -51,6 +77,10 @@ func (spec *MachineSpec) SN() string {
 	return sn
 }
 
+func NewMachineSpec() *MachineSpec {
+	return &MachineSpec{}
+}
+
 /**
  * DMIType 编码列表
  * 0 BIOS
@@ -61,20 +91,21 @@ func (spec *MachineSpec) SN() string {
  * 16 Physical Memory Array
  * 17 Memory Device
  */
-func ReadMachineSpec() (*MachineSpec, error) {
+func (spec *MachineSpec) PrepareLowLevel() error {
 	usr, err := user.Current()
 	if nil != err {
-		return nil, err
+		return err
 	}
 	if "root" != usr.Username {
-		return nil, errors.New("permission denied: must be run with root")
-	}
-	dmi := dmidecode.New()
-	if err := dmi.Run(); nil != err {
-		return nil, err
+		return errors.New("permission denied: must be run with root")
 	}
 
-	machineSpec := new(MachineSpec)
+	dmi := dmidecode.New()
+	if err := dmi.Run(); nil != err {
+		return err
+	}
+
+	machineSpec := spec
 	for _, records := range dmi.Data {
 		for _, record := range records {
 			//系统序列号
@@ -103,5 +134,5 @@ func ReadMachineSpec() (*MachineSpec, error) {
 		}
 	}
 
-	return machineSpec, nil
+	return nil
 }
