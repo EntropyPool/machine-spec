@@ -74,7 +74,10 @@ func (spec *MachineSpec) SN() string {
 		sn = fmt.Sprintf("%s%v-%s", sn, keyC.key, keyC.val)
 		i += 1
 	}
-	return sn
+	if "" == sn {
+		return spec.MAC()
+	}
+	return fmt.Sprintf("%s-mac-%s", sn, spec.MAC())
 }
 
 func NewMachineSpec() *MachineSpec {
