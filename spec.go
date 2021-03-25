@@ -7,12 +7,20 @@ import (
 	"net"
 	"os/user"
 	"sort"
+	"strconv"
 	"strings"
 )
 
+type Memory struct {
+	Dimm         string `json:"dimm"`
+	Manufacturer string `json:"manufacturer"`
+	Sn           string `json:"sn"`
+	SizeGB       int    `json:"size_gb"`
+}
+
 type MachineSpec struct {
 	SerialNumber []map[string]string `json:"sn"` //主板序列号
-	Memory       []string            `json:"memory"`
+	Memory       []Memory            `json:"memory"`
 	Cpu          []map[string]string `json:"cpu"`
 }
 
@@ -109,6 +117,7 @@ func (spec *MachineSpec) PrepareLowLevel() error {
 	}
 
 	machineSpec := spec
+
 	for _, records := range dmi.Data {
 		for _, record := range records {
 			//系统序列号
@@ -129,10 +138,19 @@ func (spec *MachineSpec) PrepareLowLevel() error {
 
 			//memory
 			if record["DMIType"] == "17" {
-				if strings.Contains(record["Size"], "GB") {
-					tmpMemory := strings.Split(record["Size"], " ")
-					machineSpec.Memory = append(machineSpec.Memory, tmpMemory[0])
+				if !strings.Contains(record["Size"], "GB") {
+					continue
 				}
+				tmpMemory := strings.Split(record["Size"], " ")
+				size, _ := strconv.ParseInt(tmpMemory[0], 10, 64)
+
+				memory := Memory{}
+				memory.SizeGB = int(size)
+				memory.Dimm = record["Locator"]
+				memory.Manufacturer = record["Manufacturer"]
+				memory.Sn = record["Serial Number"]
+
+				machineSpec.Memory = append(machineSpec.Memory, memory)
 			}
 		}
 	}

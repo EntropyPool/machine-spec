@@ -16,4 +16,5 @@ func TestReadMachineSpec(t *testing.T) {
 	log.Infof(log.Fields{}, "Machine SN: %v", sn)
 	macs := spec.MAC()
 	log.Infof(log.Fields{}, "Machine MAC: %v", macs)
+	log.Infof(log.Fields{}, "Memory: %v", spec.Memory)
 }
