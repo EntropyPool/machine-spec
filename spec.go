@@ -41,10 +41,14 @@ func (spec *MachineSpec) MAC() string {
 	})
 	macsStr := ""
 	for i, mac := range macs {
+		str := strings.Replace(mac, ":", "", -1)
+		if strings.Contains(macsStr, str) {
+			continue
+		}
 		if 0 < i {
 			macsStr = fmt.Sprintf("%s-", macsStr)
 		}
-		macsStr = fmt.Sprintf("%s%s", macsStr, strings.Replace(mac, ":", "", -1))
+		macsStr = fmt.Sprintf("%s%s", macsStr, str)
 	}
 	return macsStr
 }
