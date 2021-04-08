@@ -16,6 +16,8 @@ type Memory struct {
 	Manufacturer string `json:"manufacturer"`
 	Sn           string `json:"sn"`
 	SizeGB       int    `json:"size_gb"`
+	Type         string `json:"type"`
+	Speed        string `json:"speed"`
 }
 
 type MachineSpec struct {
@@ -153,6 +155,8 @@ func (spec *MachineSpec) PrepareLowLevel() error {
 				memory.Dimm = record["Locator"]
 				memory.Manufacturer = record["Manufacturer"]
 				memory.Sn = record["Serial Number"]
+				memory.Type = record["Type"]
+				memory.Speed = record["Speed"]
 
 				machineSpec.Memory = append(machineSpec.Memory, memory)
 			}
